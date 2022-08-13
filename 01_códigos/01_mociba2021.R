@@ -125,8 +125,8 @@ tema        <-  theme_linedraw() +
 
 
 # ---- Colores 
-c2 <- c("#E09F3E", "#9E2A2B")
-
+# c2 <- c("#E09F3E", "#9E2A2B")
+c2 <- c("#006d77", "#e29578")
 
 ## 4.1. Personas que vivieron ciberacoso ---------------------------------------
 
@@ -172,7 +172,7 @@ ggplot(df_data %>%
     y = "Porcentaje\n", 
     fill = "", 
     shape = "Sexo a nivel nacional", 
-    caption = v_caption, 
+    caption = "Fuente: Módulo sobre Ciberacoso (MOCIBA) 2021 del INEGI.\nDatos procesados por INTERSECTA (intersecta.org).\n", 
   ) +
   # Escalas 
   scale_y_continuous(label = scales::percent_format(), limits = c(0, 0.27)) +
@@ -520,8 +520,8 @@ df_data <- df_mociba21                              %>%
   # filter(agresor != 99)                             %>%
   mutate(
     sexo = case_when(
-      sexo == 1 ~ "Hombres", 
-      sexo == 2 ~ "Mujeres"
+      sexo == 1 ~ "Víctimas hombres", 
+      sexo == 2 ~ "Víctimas mujeres"
     ), 
     agresor = case_when(
       agresor == 1   ~ "Novio(a) / Pareja actual",
@@ -552,7 +552,7 @@ ggplot(df_data,
             hjust = if_else(df_data$agresor != "Desconocido(a)", -0.25, 1), size = 3) +
   # Etiquetas 
   labs( 
-    title = "Relación con la persona agresora en\ncasos de ciberacoso en México", 
+    title = "Relación con la persona agresora en casos de ciberacoso en México", 
     subtitle = "Por sexo de la persona agredida y relación\ncon la persona agresora \n", 
     x = "\nPorcentaje del total de personas que reportaron ciberacoso\n", 
     y = "", 
@@ -560,7 +560,7 @@ ggplot(df_data,
     caption = v_caption, 
   ) +
   # Escalas 
-  scale_y_discrete(label = scales::wrap_format(20)) +
+  scale_y_discrete(label = scales::wrap_format(30)) +
   scale_x_continuous(limits = c(0, 0.65), labels = scales::percent_format()) +
   scale_fill_manual(values = c2) +
   # Tema 
@@ -569,13 +569,12 @@ ggplot(df_data,
 
 ggsave(file = paste_figs("05_agresor_relacion_sexo.png"), 
        device = "png", type = "cairo", 
-       width = 6, height = 6)
+       width = 8, height = 6)
 
 
 ## 4.7. Sexo personas agresoras ------------------------------------------------
 
 # Sexo de personas agresoras inicia con "P6_"
-
 
 df_data <- df_mociba21                              %>% 
   filter(ciberacoso == 1)                           %>% 
@@ -588,8 +587,8 @@ df_data <- df_mociba21                              %>%
   # filter(agresor != 99)                             %>%
   mutate(
     sexo = case_when(
-      sexo == 1 ~ "Hombres", 
-      sexo == 2 ~ "Mujeres"
+      sexo == 1 ~ "Víctimas hombres", 
+      sexo == 2 ~ "Víctimas mujeres"
     ), 
     agresor = case_when(
       agresor == 1   ~ "Agresor(es) hombre(s)",
@@ -614,7 +613,7 @@ ggplot(df_data,
             hjust = if_else(df_data$agresor != "Agresor(es) hombre(s)", -0.25, 1), size = 3) +
   # Etiquetas 
   labs( 
-    title = "Sexo de la persona agresora en\ncasos de ciberacoso en México", 
+    title = "Sexo de la persona agresora en casos de ciberacoso en México", 
     subtitle = "Por sexo de la persona agredida\n", 
     x = "\nPorcentaje del total de personas que reportaron ciberacoso\n", 
     y = "", 
@@ -631,10 +630,145 @@ ggplot(df_data,
 
 ggsave(file = paste_figs("06_agresores_sexo.png"), 
        device = "png", type = "cairo", 
-       width = 6, height = 5)
+       width = 8, height = 6)
 
 
 ## 4.8. En casos de contenido íntimo -------------------------------------------
+
+# p4_10: En el último año, alguien:[p]ublicó, distribuyó, intercambió o 
+#  vendió imágenes, audios o videos de contenido íntimo sexual reales o 
+#  simulados, de usted sin su consentimiento
+
+# p5_10_: ¿Quiénes lo realizaron?
+# p6_10 ¿Estás personas son hombres o mujeres?
+
+# ---- Relación con las personas agresoras
+df_data <- df_mociba21 %>% 
+  # Dejar solo personas que vivieron la agresión 
+  filter(ciberacoso == 1, p4_10 == 1)                          %>% 
+  select(sexo, ent, factor, starts_with("p5_10"))     %>% 
+  pivot_longer(
+    cols = starts_with("p5_"), 
+    names_to = "code", 
+    values_to = "agresor") %>% 
+  drop_na(agresor) %>% 
+  # filter(agresor != 99)                             %>%
+  mutate(
+    sexo = case_when(
+      sexo == 1 ~ "Víctimas hombres", 
+      sexo == 2 ~ "Víctimas mujeres"
+    ), 
+    agresor = case_when(
+      agresor == 1   ~ "Novio(a) / Pareja actual",
+      agresor == 2   ~ "Ex novio(a) / ex pareja",
+      agresor == 3   ~ "Familiar",
+      agresor == 4   ~ "Amigo(a)",
+      agresor == 5   ~ "Compañero(a) de clase / trabajo",
+      agresor == 6   ~ "Conocido(a) de poco trato",
+      agresor == 7   ~ "Conocido(a) solo de vista",
+      agresor == 8   ~ "Desconocido(a)",
+      agresor == 9   ~ "Otro (ESPECIFIQUE) ",
+      agresor == 99  ~ "No sabe / no responde",
+    )
+  ) %>% 
+  group_by(sexo, agresor)                         %>% 
+  summarise(total = sum(factor))                  %>% 
+  group_by(sexo)                                  %>% 
+  mutate(prop = total/sum(total))     
+
+
+
+ggplot(df_data, 
+       # Coordenadas
+       aes(x = prop, y = reorder(agresor, prop), fill = sexo)) +
+  facet_wrap(~sexo) +
+  # Geoms
+  geom_col() +
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), 
+            family = "Fira Sans", 
+            hjust = if_else(df_data$agresor != "Desconocido(a)", -0.25, 1), size = 3) +
+  # Etiquetas 
+  labs( 
+    title = "Relación con la persona agresora en casos de difusión de contenido\níntimo sexual sin el consentimiento de la persona que aparece en él", 
+    subtitle = "Por sexo de la persona agredida y relación con la persona agresora \n", 
+    x = "\nPorcentaje del total de personas que reportaron ciberacoso\n", 
+    y = "", 
+    fill = "",
+    caption = v_caption, 
+  ) +
+  # Escalas 
+  scale_y_discrete(label = scales::wrap_format(30)) +
+  scale_x_continuous(limits = c(0, 0.5), labels = scales::percent_format()) +
+  scale_fill_manual(values = c2) +
+  # Tema 
+  tema +
+  theme(legend.position = "none")
+
+ggsave(file = paste_figs("07_contenidosexual_agresor_relacion_sexo.png"), 
+       device = "png", type = "cairo", 
+       width = 8, height = 6)
+
+
+
+# ---- Sexo de las personas agresoras 
+df_data <- df_mociba21 %>% 
+  # Dejar solo personas que vivieron la agresión 
+  filter(ciberacoso == 1, p4_10 == 1)                          %>% 
+  select(sexo, ent, factor, starts_with("p6_10"))     %>% 
+  pivot_longer(
+    cols = starts_with("p6_"), 
+    names_to = "code", 
+    values_to = "agresor") %>% 
+  drop_na(agresor)                          %>%
+  drop_na(agresor) %>% 
+  # filter(agresor != 99)                             %>%
+  mutate(
+    sexo = case_when(
+      sexo == 1 ~ "Víctimas hombres", 
+      sexo == 2 ~ "Víctimas mujeres"
+    ), 
+    agresor = case_when(
+      agresor == 1   ~ "Agresor(es) hombre(s)",
+      agresor == 2   ~ "Agresora(as) mujer(es)",
+      agresor == 3   ~ "Agresores hombre y mujer",
+      agresor == 9   ~ "No sabe",
+    )
+  ) %>% 
+  group_by(sexo, agresor)                         %>% 
+  summarise(total = sum(factor))                  %>% 
+  group_by(sexo)                                  %>% 
+  mutate(prop = total/sum(total))  
+
+ggplot(df_data, 
+       # Coordenadas
+       aes(x = prop, y = reorder(agresor, prop), fill = sexo)) +
+  facet_wrap(~sexo) +
+  # Geoms
+  geom_col() +
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), 
+            family = "Fira Sans", 
+            hjust = if_else(df_data$agresor != "Agresor(es) hombre(s)", -0.25, 1), size = 3) +
+  # Etiquetas 
+  labs( 
+    title = "Sexo de la persona agresora en casos de difusión de contenido\níntimo sexual sin el consentimiento de la persona que aparece en él", 
+    subtitle = "Por sexo de la persona agredida\n", 
+    x = "\nPorcentaje del total de personas que reportaron ciberacoso\n", 
+    y = "", 
+    fill = "",
+    caption = v_caption, 
+  ) +
+  # Escalas 
+  scale_y_discrete(label = scales::wrap_format(15)) +
+  scale_x_continuous(limits = c(0, 0.65), labels = scales::percent_format()) +
+  scale_fill_manual(values = c2) +
+  # Tema 
+  tema +
+  theme(legend.position = "none")
+
+ggsave(file = paste_figs("08_contenidosexual_agresores_sexo.png"), 
+       device = "png", type = "cairo", 
+       width = 8, height = 6)
+
 
 
 meowR(sound = 3)
